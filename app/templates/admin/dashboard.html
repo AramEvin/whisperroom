@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — WhisperRoom{% endblock %}
+
+{% block extra_css %}
+  body { min-height:100dvh; }
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .logo { font-family:var(--display); font-size:1.2rem; font-weight:800; color:#fff; }
+  .logo span { color:var(--accent); }
+  .nav-links { display:flex; gap:16px; align-items:center; }
+  .nav-links a { font-size:0.75rem; color:var(--muted); }
+  .nav-links a:hover { color:var(--text); opacity:1; }
+  .nav-links a.active { color:var(--accent); }
+
+  .page { max-width:960px; margin:0 auto; padding:28px 24px; }
+  h1 { font-family:var(--display); font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:24px; }
+  h2 { font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:9px; padding:18px 20px;
+  }
+  .stat-value { font-family:var(--display); font-size:2rem; font-weight:800; color:#fff; line-height:1; }
+  .stat-label { font-size:0.68rem; color:var(--muted); margin-top:5px; }
+  .stat-card.danger .stat-value { color:var(--red); }
+
+  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+  th { text-align:left; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--border); }
+  td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+  tr:hover td { background:var(--surface); }
+  .room-name { font-weight:500; }
+  .room-name::before { content:'#'; color:var(--accent); }
+  .count { color:var(--muted); font-size:0.75rem; }
+  .date { color:var(--muted); font-size:0.72rem; }
+
+  .btn-danger {
+    background:transparent; border:1px solid var(--red); color:var(--red);
+    font-family:var(--mono); font-size:0.7rem; padding:4px 10px;
+    border-radius:5px; cursor:pointer; transition:background 0.15s;
+  }
+  .btn-danger:hover { background:rgba(248,113,113,0.1); }
+
+  @media(max-width:640px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+{% endblock %}
+
+{% block body %}
+<nav>
+  <div class="logo">Whisper<span>Room</span> <span style="font-size:0.65rem;color:var(--muted);font-family:var(--mono);font-weight:400">admin</span></div>
+  <div class="nav-links">
+    <a href="/admin/" class="active">Dashboard</a>
+    <a href="/admin/users">Users</a>
+    <a href="/admin/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1>Dashboard</h1>
+
+  <h2>Overview</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_rooms }}</div>
+      <div class="stat-label">Total Rooms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_messages }}</div>
+      <div class="stat-label">Total Messages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_users }}</div>
+      <div class="stat-label">Known Users</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-value">{{ stats.banned_users }}</div>
+      <div class="stat-label">Banned Users</div>
+    </div>
+  </div>
+
+  <h2>Rooms</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Room</th>
+        <th>Messages</th>
+        <th>Created</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in rooms %}
+      <tr>
+        <td><span class="room-name">{{ room.name }}</span></td>
+        <td><span class="count">{{ room.message_count }}</span></td>
+        <td><span class="date">{{ room.created_at.strftime('%Y-%m-%d %H:%M') }}</span></td>
+        <td>
+          <form method="POST" action="/admin/rooms/{{ room.id }}/delete"
+                onsubmit="return confirm('Delete #{{ room.name }} and all its messages?')">
+            <button class="btn-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">No rooms yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

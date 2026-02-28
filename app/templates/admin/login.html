@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — WhisperRoom{% endblock %}
+
+{% block extra_css %}
+  body { display:flex; align-items:center; justify-content:center; min-height:100dvh; }
+  .card {
+    width:100%; max-width:360px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:32px;
+  }
+  .logo { font-family:var(--display); font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:4px; }
+  .logo span { color:var(--accent); }
+  .sub { font-size:0.72rem; color:var(--muted); margin-bottom:28px; }
+  label { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:7px; }
+  input[type=password] {
+    width:100%; background:var(--bg); border:1px solid var(--border);
+    color:var(--text); font-family:var(--mono); font-size:0.85rem;
+    padding:9px 13px; border-radius:6px; outline:none;
+    transition:border-color 0.15s; margin-bottom:14px;
+  }
+  input[type=password]:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-glow); }
+  button {
+    width:100%; background:var(--accent); color:#fff; border:none;
+    font-family:var(--mono); font-size:0.82rem; font-weight:500;
+    padding:10px; border-radius:6px; cursor:pointer;
+    transition:opacity 0.15s;
+  }
+  button:hover { opacity:0.82; }
+  .error { font-size:0.75rem; color:var(--red); margin-bottom:12px; }
+{% endblock %}
+
+{% block body %}
+<div class="card">
+  <div class="logo">Whisper<span>Room</span></div>
+  <div class="sub">Admin access only</div>
+  {% if error %}<div class="error">⚠ {{ error }}</div>{% endif %}
+  <form method="POST">
+    <label>Password</label>
+    <input type="password" name="password" autofocus placeholder="enter admin password" />
+    <button type="submit">Sign in →</button>
+  </form>
+</div>
+{% endblock %}

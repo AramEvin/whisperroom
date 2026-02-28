@@ -19,9 +19,11 @@ def create_app(env='default'):
 
     from .blueprints.main import main_bp
     from .blueprints.chat import chat_bp
+    from .blueprints.admin import admin_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(admin_bp)
 
-    from .blueprints import events  # noqa - registers socket events
+    from .blueprints import events  # noqa
 
     return app

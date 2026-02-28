@@ -8,6 +8,7 @@ class UserSession(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     token      = db.Column(db.String(64), unique=True, nullable=False, index=True)
     nick       = db.Column(db.String(64), nullable=False)
+    is_banned  = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen  = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -15,7 +16,11 @@ class UserSession(db.Model):
         return f'<UserSession {self.nick}>'
 
     def to_dict(self):
-        return {'token': self.token, 'nick': self.nick}
+        return {
+            'token': self.token,
+            'nick': self.nick,
+            'is_banned': self.is_banned,
+        }
 
     @staticmethod
     def get_or_create(token, nick_generator):

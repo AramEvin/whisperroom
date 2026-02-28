@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Users — WhisperRoom Admin{% endblock %}
+
+{% block extra_css %}
+  body { min-height:100dvh; }
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .logo { font-family:var(--display); font-size:1.2rem; font-weight:800; color:#fff; }
+  .logo span { color:var(--accent); }
+  .nav-links { display:flex; gap:16px; align-items:center; }
+  .nav-links a { font-size:0.75rem; color:var(--muted); }
+  .nav-links a:hover { color:var(--text); opacity:1; }
+  .nav-links a.active { color:var(--accent); }
+
+  .page { max-width:960px; margin:0 auto; padding:28px 24px; }
+  h1 { font-family:var(--display); font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:24px; }
+
+  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+  th { text-align:left; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:8px 12px; border-bottom:1px solid var(--border); }
+  td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+  tr:hover td { background:var(--surface); }
+
+  .nick { font-weight:500; color:var(--green); }
+  .token { font-size:0.65rem; color:var(--muted); font-family:var(--mono); }
+  .date { color:var(--muted); font-size:0.72rem; }
+  .badge {
+    font-size:0.6rem; padding:2px 7px; border-radius:10px;
+    border:1px solid; display:inline-block;
+  }
+  .badge.banned { color:var(--red); border-color:var(--red); background:rgba(248,113,113,0.08); }
+  .badge.active { color:var(--green); border-color:rgba(52,211,153,0.4); }
+
+  .btn {
+    font-family:var(--mono); font-size:0.7rem; padding:4px 10px;
+    border-radius:5px; cursor:pointer; transition:background 0.15s; border:1px solid;
+    background:transparent;
+  }
+  .btn-danger { border-color:var(--red); color:var(--red); }
+  .btn-danger:hover { background:rgba(248,113,113,0.1); }
+  .btn-success { border-color:var(--green); color:var(--green); }
+  .btn-success:hover { background:rgba(52,211,153,0.1); }
+{% endblock %}
+
+{% block body %}
+<nav>
+  <div class="logo">Whisper<span>Room</span> <span style="font-size:0.65rem;color:var(--muted);font-family:var(--mono);font-weight:400">admin</span></div>
+  <div class="nav-links">
+    <a href="/admin/">Dashboard</a>
+    <a href="/admin/users" class="active">Users</a>
+    <a href="/admin/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1>Users <span style="font-size:0.9rem;color:var(--muted)">({{ users|length }})</span></h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nickname</th>
+        <th>Token</th>
+        <th>Last Seen</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td><span class="nick">{{ user.nick }}</span></td>
+        <td><span class="token">{{ user.token[:16] }}…</span></td>
+        <td><span class="date">{{ user.last_seen.strftime('%Y-%m-%d %H:%M') }}</span></td>
+        <td>
+          {% if user.is_banned %}
+            <span class="badge banned">banned</span>
+          {% else %}
+            <span class="badge active">active</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if user.is_banned %}
+            <form method="POST" action="/admin/users/{{ user.id }}/unban">
+              <button class="btn btn-success" type="submit">Unban</button>
+            </form>
+          {% else %}
+            <form method="POST" action="/admin/users/{{ user.id }}/ban"
+                  onsubmit="return confirm('Ban {{ user.nick }}?')">
+              <button class="btn btn-danger" type="submit">Ban</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No users yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
