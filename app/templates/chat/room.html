@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block title %}#{{ room.name }} — WhisperRoom{% endblock %}
+
+{% block extra_css %}
+  body { height: 100dvh; display: grid; grid-template-rows: auto 1fr auto auto; overflow: hidden; }
+
+  /* ── Header ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 20px; border-bottom: 1px solid var(--border); background: var(--surface);
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .back-btn {
+    font-size: 0.75rem; color: var(--muted); text-decoration: none;
+    padding: 4px 8px; border: 1px solid var(--border); border-radius: 5px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+  .room-title { font-family: var(--display); font-size: 1.1rem; font-weight: 800; color: #fff; }
+  .room-title span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .you-chip {
+    font-size: 0.68rem; color: var(--green);
+    border: 1px solid rgba(52,211,153,0.3); padding: 3px 8px; border-radius: 20px;
+  }
+  .status { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--muted); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s, box-shadow 0.3s; flex-shrink: 0; }
+  .dot.connected { background: var(--green); box-shadow: 0 0 7px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Layout ── */
+  main { display: grid; grid-template-columns: 1fr 210px; overflow: hidden; min-height: 0; }
+
+  /* ── Messages ── */
+  #messages {
+    overflow-y: auto; padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+    border-right: 1px solid var(--border);
+    scroll-behavior: smooth;
+  }
+  .message { display: flex; flex-direction: column; gap: 2px; max-width: 78%; animation: fadeUp 0.16s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  .message.system { max-width: 100%; align-self: center; }
+  .message.system .bubble { background: transparent; color: var(--muted); font-size: 0.68rem; text-align: center; border: none; padding: 1px 0; }
+  .message.history .bubble { opacity: 0.7; }
+
+  .meta { display: flex; align-items: center; gap: 6px; }
+  .nick { font-size: 0.68rem; font-weight: 500; color: var(--accent); }
+  .nick.mine { color: var(--green); }
+  .time { font-size: 0.6rem; color: transparent; transition: color 0.2s; }
+  .message:hover .time { color: var(--muted); }
+
+  .bubble {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 2px 8px 8px 8px; padding: 7px 11px;
+    font-size: 0.83rem; line-height: 1.55; word-break: break-word;
+    transition: border-color 0.15s;
+  }
+  .bubble.mine { background: #150e2a; border-color: var(--accent-dim); border-radius: 8px 2px 8px 8px; }
+  .message:hover .bubble { border-color: #2a2a40; }
+  .message:hover .bubble.mine { border-color: var(--accent); }
+
+  .history-divider {
+    text-align: center; font-size: 0.62rem; color: var(--muted);
+    padding: 6px 0 10px; letter-spacing: 0.1em;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .sidebar-section {}
+  .sidebar-title {
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .online-count { background: var(--border); color: var(--green); font-size: 0.57rem; padding: 2px 6px; border-radius: 10px; }
+  #user-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  #user-list li {
+    font-size: 0.73rem; color: var(--text);
+    display: flex; align-items: center; gap: 5px;
+    padding: 2px 0; animation: fadeUp 0.18s ease;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #user-list li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px var(--green); flex-shrink: 0; }
+  .you-badge { font-size: 0.57rem; color: var(--accent); border: 1px solid var(--accent); padding: 1px 4px; border-radius: 3px; margin-left: auto; flex-shrink: 0; }
+
+  /* ── Typing bar ── */
+  #typing-bar {
+    min-height: 20px; padding: 2px 18px 4px;
+    font-size: 0.66rem; color: var(--yellow);
+    border-right: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity 0.2s;
+  }
+  #typing-bar.empty { opacity: 0; pointer-events: none; }
+  .typing-dots span {
+    display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--yellow); margin: 0 1px;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
+
+  /* ── Footer ── */
+  footer {
+    display: flex; gap: 9px; padding: 11px 18px;
+    border-top: 1px solid var(--border); background: var(--surface);
+  }
+  #msg-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: var(--mono); font-size: 0.83rem; padding: 8px 13px;
+    border-radius: 6px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  #msg-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  #msg-input::placeholder { color: var(--muted); }
+  #msg-input:disabled, #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  #send-btn {
+    background: var(--accent); color: #fff; border: none; font-family: var(--mono);
+    font-size: 0.76rem; font-weight: 500; padding: 8px 16px;
+    border-radius: 6px; cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s;
+  }
+  #send-btn:hover:not(:disabled) { opacity: 0.82; box-shadow: 0 0 14px var(--accent-glow); }
+
+  @media (max-width: 600px) {
+    main { grid-template-columns: 1fr; }
+    #sidebar { display: none; }
+    #typing-bar { border-right: none; }
+  }
+{% endblock %}
+
+{% block body %}
+<header>
+  <div class="header-left">
+    <a class="back-btn" href="/">← lobby</a>
+    <div class="room-title"><span>#</span>{{ room.name }}</div>
+  </div>
+  <div class="header-right">
+    <span class="you-chip">{{ nick }}</span>
+    <div class="status">
+      <div class="dot" id="dot"></div>
+      <span id="status-text">connecting</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="messages">
+    {% if history %}
+      <div class="history-divider">─── message history ───</div>
+      {% for msg in history %}
+        <div class="message history" style="align-self: {% if msg.nick == nick %}flex-end{% else %}flex-start{% endif %}">
+          <div class="meta">
+            <span class="nick {% if msg.nick == nick %}mine{% endif %}">{{ msg.nick }}</span>
+            <span class="time" style="color: var(--muted);">{{ msg.created_at }}</span>
+          </div>
+          <div class="bubble {% if msg.nick == nick %}mine{% endif %}">{{ msg.text }}</div>
+        </div>
+      {% endfor %}
+      <div class="history-divider">─── live ───</div>
+    {% endif %}
+  </div>
+
+  <aside id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">
+        Online
+        <span class="online-count" id="online-count">0</span>
+      </div>
+      <ul id="user-list"></ul>
+    </div>
+  </aside>
+</main>
+
+<div id="typing-bar" class="empty">
+  <div class="typing-dots"><span></span><span></span><span></span></div>
+  <span id="typing-text"></span>
+</div>
+
+<footer>
+  <input id="msg-input" type="text" placeholder="message #{{ room.name }}..." maxlength="500" autocomplete="off" disabled />
+  <button id="send-btn" disabled>Send ↑</button>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const ROOM = {{ room.name | tojson }};
+  const MY_NICK = {{ nick | tojson }};
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('msg-input');
+  const sendBtn    = document.getElementById('send-btn');
+  const dotEl      = document.getElementById('dot');
+  const statusEl   = document.getElementById('status-text');
+  const userListEl = document.getElementById('user-list');
+  const countEl    = document.getElementById('online-count');
+  const typingBar  = document.getElementById('typing-bar');
+  const typingText = document.getElementById('typing-text');
+
+  // Typing state
+  let typingTimer = null;
+  let isTyping = false;
+  const typingUsers = new Set();
+
+  // ── Socket ──
+  const socket = io();
+
+  socket.on('connect', () => {
+    dotEl.classList.add('connected');
+    statusEl.textContent = 'connected';
+    inputEl.disabled = false;
+    sendBtn.disabled = false;
+    socket.emit('join', { room: ROOM, nick: MY_NICK });
+    // Scroll to bottom of history
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  });
+
+  socket.on('disconnect', () => {
+    dotEl.classList.remove('connected');
+    statusEl.textContent = 'reconnecting...';
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+  });
+
+  // ── User list ──
+  socket.on('user_list', (data) => {
+    userListEl.innerHTML = '';
+    countEl.textContent = data.users.length;
+    data.users.forEach(nick => {
+      const li = document.createElement('li');
+      const isMe = nick === MY_NICK;
+      li.innerHTML = esc(nick) + (isMe ? ' <span class="you-badge">you</span>' : '');
+      userListEl.appendChild(li);
+    });
+  });
+
+  socket.on('user_joined', (data) => {
+    if (data.nick !== MY_NICK) addSystem('→ <strong>' + esc(data.nick) + '</strong> joined');
+  });
+
+  socket.on('user_left', (data) => {
+    typingUsers.delete(data.nick);
+    renderTyping();
+    addSystem('← <strong>' + esc(data.nick) + '</strong> left');
+  });
+
+  // ── Messages ──
+  socket.on('new_message', (data) => {
+    typingUsers.delete(data.nick);
+    renderTyping();
+    addMessage(data.nick, data.text, data.created_at, data.nick === MY_NICK);
+  });
+
+  // ── Typing ──
+  socket.on('user_typing', (data) => {
+    if (data.nick === MY_NICK) return;
+    data.typing ? typingUsers.add(data.nick) : typingUsers.delete(data.nick);
+    renderTyping();
+  });
+
+  function renderTyping() {
+    const names = [...typingUsers];
+    if (!names.length) {
+      typingBar.classList.add('empty');
+      typingText.textContent = '';
+    } else {
+      typingBar.classList.remove('empty');
+      typingText.textContent = names.length === 1
+        ? names[0] + ' is typing...'
+        : names.length === 2
+          ? names[0] + ' and ' + names[1] + ' are typing...'
+          : names.length + ' people are typing...';
+    }
+  }
+
+  // ── Input ──
+  inputEl.addEventListener('input', () => {
+    if (!isTyping) {
+      isTyping = true;
+      socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: true });
+    }
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      isTyping = false;
+      socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false });
+    }, 1500);
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+  function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || !socket.connected) return;
+    clearTimeout(typingTimer);
+    isTyping = false;
+    socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false });
+    socket.emit('send_message', { room: ROOM, nick: MY_NICK, text });
+    inputEl.value = '';
+  }
+
+  // ── Helpers ──
+  function addMessage(nick, text, time, isMe) {
+    const t = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
+    div.innerHTML =
+      '<div class="meta">' +
+        '<span class="nick ' + (isMe ? 'mine' : '') + '">' + esc(nick) + '</span>' +
+        '<span class="time">' + t + '</span>' +
+      '</div>' +
+      '<div class="bubble ' + (isMe ? 'mine' : '') + '">' + esc(text) + '</div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addSystem(html) {
+    const div = document.createElement('div');
+    div.className = 'message system';
+    div.innerHTML = '<div class="bubble">' + html + '</div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+{% endblock %}
