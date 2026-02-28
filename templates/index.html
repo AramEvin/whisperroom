@@ -26,11 +26,16 @@
     }
     .logo { font-family: var(--display); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
     .logo span { color: var(--accent); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .online-count { font-size: 0.72rem; color: var(--muted); }
+    .online-count strong { color: var(--green); }
     .status { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--muted); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: background 0.3s, box-shadow 0.3s; }
     .dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
     main { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 220px; overflow: hidden; }
+
     #messages {
       overflow-y: auto; padding: 20px 24px;
       display: flex; flex-direction: column; gap: 12px;
@@ -38,22 +43,46 @@
     }
     #messages::-webkit-scrollbar { width: 4px; }
     #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
     .message { display: flex; flex-direction: column; gap: 3px; max-width: 85%; animation: fadeUp 0.2s ease; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
     .message.system { max-width: 100%; align-self: center; }
-    .message.system .bubble { background: transparent; color: var(--muted); font-size: 0.72rem; text-align: center; border: none; padding: 2px 0; }
+    .message.system .bubble {
+      background: transparent; color: var(--muted); font-size: 0.72rem;
+      text-align: center; border: none; padding: 2px 0;
+    }
     .meta { display: flex; align-items: center; gap: 8px; }
     .nick { font-size: 0.72rem; font-weight: 500; color: var(--accent); }
     .nick.mine { color: var(--green); }
     .time { font-size: 0.65rem; color: var(--muted); }
-    .bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 2px 8px 8px 8px; padding: 8px 12px; font-size: 0.875rem; line-height: 1.5; word-break: break-word; }
+    .bubble {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 2px 8px 8px 8px; padding: 8px 12px;
+      font-size: 0.875rem; line-height: 1.5; word-break: break-word;
+    }
     .bubble.mine { background: #1a1030; border-color: var(--accent); border-radius: 8px 2px 8px 8px; }
+
+    /* SIDEBAR */
     #sidebar { padding: 16px; overflow-y: auto; }
-    .sidebar-title { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .sidebar-title {
+      font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+    }
     #user-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-    #user-list li { font-size: 0.78rem; color: var(--text); display: flex; align-items: center; gap: 6px; }
-    #user-list li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
-    .you-badge { font-size: 0.6rem; color: var(--accent); border: 1px solid var(--accent); padding: 1px 4px; border-radius: 3px; }
+    #user-list li {
+      font-size: 0.78rem; color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+      animation: fadeUp 0.2s ease;
+    }
+    #user-list li::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+    }
+    .you-badge {
+      font-size: 0.6rem; color: var(--accent);
+      border: 1px solid var(--accent); padding: 1px 4px; border-radius: 3px;
+    }
+
     footer {
       position: relative; z-index: 1; display: flex; gap: 10px;
       padding: 14px 24px; border-top: 1px solid var(--border); background: var(--surface);
@@ -72,15 +101,20 @@
       cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s;
     }
     #send-btn:hover { opacity: 0.85; box-shadow: 0 0 12px var(--accent-glow); }
+
     @media (max-width: 600px) { main { grid-template-columns: 1fr; } #sidebar { display: none; } }
   </style>
 </head>
 <body>
+
   <header>
     <div class="logo">Whisper<span>Room</span></div>
-    <div class="status">
-      <div class="dot" id="dot"></div>
-      <span id="status-text">connecting...</span>
+    <div class="header-right">
+      <div class="online-count"><strong id="online-num">0</strong> online</div>
+      <div class="status">
+        <div class="dot" id="dot"></div>
+        <span id="status-text">connecting...</span>
+      </div>
     </div>
   </header>
 
@@ -98,28 +132,31 @@
   </footer>
 
   <script>
+    // ── Random nickname ──
     const ADJECTIVES = ['silent','hidden','ghost','dark','quick','calm','wild','lost','cool','pale'];
     const NOUNS      = ['panda','fox','wolf','crow','moth','lynx','hawk','frog','deer','bear'];
     const myNick = ADJECTIVES[Math.floor(Math.random()*10)] + '_' + NOUNS[Math.floor(Math.random()*10)];
 
-    const messagesEl = document.getElementById('messages');
-    const inputEl    = document.getElementById('msg-input');
-    const sendBtn    = document.getElementById('send-btn');
-    const dotEl      = document.getElementById('dot');
-    const statusEl   = document.getElementById('status-text');
-    const userListEl = document.getElementById('user-list');
+    // ── DOM ──
+    const messagesEl  = document.getElementById('messages');
+    const inputEl     = document.getElementById('msg-input');
+    const sendBtn     = document.getElementById('send-btn');
+    const dotEl       = document.getElementById('dot');
+    const statusEl    = document.getElementById('status-text');
+    const userListEl  = document.getElementById('user-list');
+    const onlineNumEl = document.getElementById('online-num');
 
+    // ── Socket ──
     const socket = io();
 
     socket.on('connect', () => {
       dotEl.classList.add('connected');
-      statusEl.textContent = 'connected as ' + myNick;
+      statusEl.textContent = myNick;
       inputEl.disabled = false;
       sendBtn.disabled = false;
-      const li = document.createElement('li');
-      li.innerHTML = myNick + ' <span class="you-badge">you</span>';
-      userListEl.appendChild(li);
-      addSystemMessage('👻 You joined as <strong>' + myNick + '</strong>');
+
+      // Register our nickname with the server
+      socket.emit('user_join', { nick: myNick });
     });
 
     socket.on('disconnect', () => {
@@ -130,10 +167,29 @@
       addSystemMessage('⚠️ Connection lost. Reconnecting...');
     });
 
+    // ── Live user list from server ──
+    socket.on('user_list', (data) => {
+      userListEl.innerHTML = '';
+      onlineNumEl.textContent = data.users.length;
+      data.users.forEach(nick => {
+        const li = document.createElement('li');
+        const isMe = nick === myNick;
+        li.innerHTML = esc(nick) + (isMe ? ' <span class="you-badge">you</span>' : '');
+        userListEl.appendChild(li);
+      });
+    });
+
+    // ── System messages (join/leave) ──
+    socket.on('system_message', (data) => {
+      addSystemMessage(esc(data.text));
+    });
+
+    // ── Chat messages ──
     socket.on('new_message', (data) => {
       addMessage(data.nick, data.text, data.nick === myNick);
     });
 
+    // ── Send ──
     sendBtn.addEventListener('click', sendMessage);
     inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
 
@@ -144,6 +200,7 @@
       inputEl.value = '';
     }
 
+    // ── Render helpers ──
     function addMessage(nick, text, isMe) {
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const div = document.createElement('div');
@@ -159,16 +216,16 @@
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    function addSystemMessage(html) {
+    function addSystemMessage(text) {
       const div = document.createElement('div');
       div.className = 'message system';
-      div.innerHTML = '<div class="bubble">' + html + '</div>';
+      div.innerHTML = '<div class="bubble">' + text + '</div>';
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
     function esc(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
   </script>
 </body>
