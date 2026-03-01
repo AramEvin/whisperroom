@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, make_response
-from ..models import Room, UserSession
+from flask import Blueprint, render_template, request, make_response, jsonify
+from ..models import Room, UserSession, Message
 from ..utils import generate_nick, generate_token
 from config import Config
 
@@ -31,3 +31,20 @@ def room(room_name):
     ))
     resp.set_cookie('wr_token', token, max_age=60*60*24*30)
     return resp
+
+
+@chat_bp.route('/room/<room_name>/search')
+def search(room_name):
+    """JSON search endpoint — GET /room/<name>/search?q=hello"""
+    chat_room = Room.query.filter_by(name=room_name).first_or_404()
+    query = request.args.get('q', '').strip()
+
+    if not query or len(query) < 2:
+        return jsonify({'results': [], 'query': query, 'count': 0})
+
+    results = Message.search(chat_room.id, query, limit=30)
+    return jsonify({
+        'query': query,
+        'count': len(results),
+        'results': [m.to_dict() for m in results],
+    })

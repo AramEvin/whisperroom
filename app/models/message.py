@@ -22,3 +22,17 @@ class Message(db.Model):
             'created_at': self.created_at.strftime('%H:%M'),
             'date': self.created_at.strftime('%Y-%m-%d'),
         }
+
+    @staticmethod
+    def search(room_id, query, limit=50):
+        """Full-text search in room messages."""
+        return (
+            Message.query
+            .filter(
+                Message.room_id == room_id,
+                Message.text.ilike(f'%{query}%')
+            )
+            .order_by(Message.created_at.desc())
+            .limit(limit)
+            .all()
+        )

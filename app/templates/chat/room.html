@@ -2,142 +2,178 @@
 {% block title %}#{{ room.name }} — WhisperRoom{% endblock %}
 
 {% block extra_css %}
-  body { height: 100dvh; display: grid; grid-template-rows: auto 1fr auto auto; overflow: hidden; }
+  body { height:100dvh; display:grid; grid-template-rows:auto auto 1fr auto auto; overflow:hidden; }
 
+  /* ── Header ── */
   header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 20px; border-bottom: 1px solid var(--border); background: var(--surface);
-    gap: 12px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 20px; border-bottom:1px solid var(--border); background:var(--surface); gap:12px;
   }
-  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
   .back-btn {
-    font-size: 0.75rem; color: var(--muted); text-decoration: none;
-    padding: 4px 8px; border: 1px solid var(--border); border-radius: 5px;
-    transition: border-color 0.15s, color 0.15s;
+    font-size:0.75rem; color:var(--muted); text-decoration:none;
+    padding:4px 8px; border:1px solid var(--border); border-radius:5px;
+    transition:border-color 0.15s, color 0.15s;
   }
-  .back-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
-  .room-title { font-family: var(--display); font-size: 1.1rem; font-weight: 800; color: #fff; }
-  .room-title span { color: var(--accent); }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-  .you-chip { font-size: 0.68rem; color: var(--green); border: 1px solid rgba(52,211,153,0.3); padding: 3px 8px; border-radius: 20px; }
-  .status { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--muted); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s, box-shadow 0.3s; flex-shrink: 0; }
-  .dot.connected { background: var(--green); box-shadow: 0 0 7px var(--green); animation: pulse 2s infinite; }
+  .back-btn:hover { border-color:var(--accent); color:var(--accent); opacity:1; }
+  .room-title { font-family:var(--display); font-size:1.1rem; font-weight:800; color:#fff; }
+  .room-title span { color:var(--accent); }
+  .header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .you-chip { font-size:0.68rem; color:var(--green); border:1px solid rgba(52,211,153,0.3); padding:3px 8px; border-radius:20px; }
+  .status { display:flex; align-items:center; gap:6px; font-size:0.7rem; color:var(--muted); }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--muted); transition:background 0.3s,box-shadow 0.3s; flex-shrink:0; }
+  .dot.connected { background:var(--green); box-shadow:0 0 7px var(--green); animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  /* Sound toggle button */
-  .sound-btn {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 0.75rem; padding: 4px 8px; border-radius: 5px; cursor: pointer;
-    transition: border-color 0.15s, color 0.15s; font-family: var(--mono);
+  /* Icon buttons */
+  .icon-btn {
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    font-size:0.78rem; padding:4px 9px; border-radius:5px; cursor:pointer;
+    transition:border-color 0.15s,color 0.15s; font-family:var(--mono);
   }
-  .sound-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .sound-btn.on { border-color: var(--green); color: var(--green); }
+  .icon-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .icon-btn.on { border-color:var(--green); color:var(--green); }
+  .icon-btn.search-active { border-color:var(--yellow); color:var(--yellow); }
 
-  main { display: grid; grid-template-columns: 1fr 210px; overflow: hidden; min-height: 0; }
+  /* ── Layout ── */
+  main { display:grid; grid-template-columns:1fr 210px; overflow:hidden; min-height:0; }
 
+  /* ── Search panel ── */
+  #search-panel {
+    display:none;
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:10px 18px; gap:8px; align-items:center;
+  }
+  #search-panel.open { display:flex; }
+  #search-input {
+    flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    font-family:var(--mono); font-size:0.83rem; padding:7px 12px;
+    border-radius:6px; outline:none; transition:border-color 0.15s;
+  }
+  #search-input:focus { border-color:var(--yellow); box-shadow:0 0 0 2px rgba(251,191,36,0.15); }
+  #search-input::placeholder { color:var(--muted); }
+  #search-count { font-size:0.7rem; color:var(--muted); white-space:nowrap; min-width:60px; }
+  .search-close {
+    background:transparent; border:none; color:var(--muted); font-size:1rem;
+    cursor:pointer; padding:4px 6px; border-radius:4px;
+  }
+  .search-close:hover { color:var(--text); }
+
+  /* ── Messages ── */
   #messages {
-    overflow-y: auto; padding: 14px 18px;
-    display: flex; flex-direction: column; gap: 8px;
-    border-right: 1px solid var(--border); scroll-behavior: smooth;
+    overflow-y:auto; padding:14px 18px;
+    display:flex; flex-direction:column; gap:8px;
+    border-right:1px solid var(--border); scroll-behavior:smooth;
   }
-  #messages::-webkit-scrollbar { width: 3px; }
-  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  #messages::-webkit-scrollbar { width:3px; }
+  #messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
-  .message { display: flex; flex-direction: column; gap: 2px; max-width: 78%; animation: fadeUp 0.16s ease; }
+  .message { display:flex; flex-direction:column; gap:2px; max-width:78%; animation:fadeUp 0.16s ease; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-  .message.system { max-width: 100%; align-self: center; }
-  .message.system .bubble { background: transparent; color: var(--muted); font-size: 0.68rem; text-align: center; border: none; padding: 1px 0; }
-  .message.history .bubble { opacity: 0.7; }
+  .message.system { max-width:100%; align-self:center; }
+  .message.system .bubble { background:transparent; color:var(--muted); font-size:0.68rem; text-align:center; border:none; padding:1px 0; }
+  .message.history .bubble { opacity:0.7; }
+  .message.highlight .bubble { border-color:var(--yellow) !important; background:rgba(251,191,36,0.05) !important; }
 
-  .meta { display: flex; align-items: center; gap: 6px; }
-  .nick { font-size: 0.68rem; font-weight: 500; color: var(--accent); }
-  .nick.mine { color: var(--green); }
-  .time { font-size: 0.6rem; color: transparent; transition: color 0.2s; }
-  .message:hover .time { color: var(--muted); }
+  .meta { display:flex; align-items:center; gap:6px; }
+  .nick { font-size:0.68rem; font-weight:500; color:var(--accent); }
+  .nick.mine { color:var(--green); }
+  .time { font-size:0.6rem; color:transparent; transition:color 0.2s; }
+  .message:hover .time { color:var(--muted); }
 
   .bubble {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 2px 8px 8px 8px; padding: 7px 11px;
-    font-size: 0.83rem; line-height: 1.55; word-break: break-word;
-    transition: border-color 0.15s;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:2px 8px 8px 8px; padding:7px 11px;
+    font-size:0.83rem; line-height:1.55; word-break:break-word;
+    transition:border-color 0.15s;
   }
-  .bubble.mine { background: #150e2a; border-color: var(--accent-dim); border-radius: 8px 2px 8px 8px; }
-  .message:hover .bubble { border-color: #2a2a40; }
-  .message:hover .bubble.mine { border-color: var(--accent); }
+  .bubble.mine { background:#150e2a; border-color:var(--accent-dim); border-radius:8px 2px 8px 8px; }
+  .message:hover .bubble { border-color:#2a2a40; }
+  .message:hover .bubble.mine { border-color:var(--accent); }
 
-  /* Mention highlight */
-  .mention { color: var(--yellow); font-weight: 500; background: rgba(251,191,36,0.1); padding: 0 2px; border-radius: 3px; }
-  .mention.me { color: var(--green); background: rgba(52,211,153,0.12); }
+  /* Search match highlight */
+  .search-match { background:rgba(251,191,36,0.25); border-radius:2px; padding:0 1px; }
+  .mention { color:var(--yellow); font-weight:500; background:rgba(251,191,36,0.1); padding:0 2px; border-radius:3px; }
+  .mention.me { color:var(--green); background:rgba(52,211,153,0.12); }
 
-  .history-divider { text-align: center; font-size: 0.62rem; color: var(--muted); padding: 6px 0 10px; letter-spacing: 0.1em; }
+  .history-divider { text-align:center; font-size:0.62rem; color:var(--muted); padding:6px 0 10px; letter-spacing:0.1em; }
 
-  #sidebar { padding: 14px; overflow-y: auto; }
+  /* ── Sidebar ── */
+  #sidebar { padding:14px; overflow-y:auto; }
   .sidebar-title {
-    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 8px;
-    display: flex; align-items: center; justify-content: space-between;
+    font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px;
+    display:flex; align-items:center; justify-content:space-between;
   }
-  .online-count { background: var(--border); color: var(--green); font-size: 0.57rem; padding: 2px 6px; border-radius: 10px; }
-  #user-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .online-count { background:var(--border); color:var(--green); font-size:0.57rem; padding:2px 6px; border-radius:10px; }
+  #user-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
   #user-list li {
-    font-size: 0.73rem; color: var(--text); display: flex; align-items: center;
-    gap: 5px; padding: 2px 0; animation: fadeUp 0.18s ease;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size:0.73rem; color:var(--text); display:flex; align-items:center;
+    gap:5px; padding:2px 0; animation:fadeUp 0.18s ease;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  #user-list li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 4px var(--green); flex-shrink: 0; }
-  .you-badge { font-size: 0.57rem; color: var(--accent); border: 1px solid var(--accent); padding: 1px 4px; border-radius: 3px; margin-left: auto; flex-shrink: 0; }
+  #user-list li::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 4px var(--green); flex-shrink:0; }
+  .you-badge { font-size:0.57rem; color:var(--accent); border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:auto; flex-shrink:0; }
 
+  /* ── Typing bar ── */
   #typing-bar {
-    min-height: 20px; padding: 2px 18px 4px; font-size: 0.66rem; color: var(--yellow);
-    border-right: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
-    transition: opacity 0.2s;
+    min-height:20px; padding:2px 18px 4px; font-size:0.66rem; color:var(--yellow);
+    border-right:1px solid var(--border); display:flex; align-items:center; gap:6px;
+    transition:opacity 0.2s;
   }
-  #typing-bar.empty { opacity: 0; pointer-events: none; }
-  .typing-dots span {
-    display: inline-block; width: 3px; height: 3px; border-radius: 50%;
-    background: var(--yellow); margin: 0 1px; animation: bounce 1.2s infinite;
-  }
-  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  #typing-bar.empty { opacity:0; pointer-events:none; }
+  .typing-dots span { display:inline-block; width:3px; height:3px; border-radius:50%; background:var(--yellow); margin:0 1px; animation:bounce 1.2s infinite; }
+  .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay:0.4s; }
   @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
 
+  /* ── Footer ── */
   footer {
-    display: flex; gap: 9px; padding: 11px 18px;
-    border-top: 1px solid var(--border); background: var(--surface);
+    display:flex; gap:9px; padding:11px 18px;
+    border-top:1px solid var(--border); background:var(--surface);
   }
   #msg-input {
-    flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    font-family: var(--mono); font-size: 0.83rem; padding: 8px 13px;
-    border-radius: 6px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    font-family:var(--mono); font-size:0.83rem; padding:8px 13px;
+    border-radius:6px; outline:none; transition:border-color 0.15s,box-shadow 0.15s;
   }
-  #msg-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-  #msg-input::placeholder { color: var(--muted); }
-  #msg-input:disabled, #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  #msg-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-glow); }
+  #msg-input::placeholder { color:var(--muted); }
+  #msg-input:disabled, #send-btn:disabled { opacity:0.35; cursor:not-allowed; }
   #send-btn {
-    background: var(--accent); color: #fff; border: none; font-family: var(--mono);
-    font-size: 0.76rem; font-weight: 500; padding: 8px 16px;
-    border-radius: 6px; cursor: pointer; transition: opacity 0.15s, box-shadow 0.15s;
+    background:var(--accent); color:#fff; border:none; font-family:var(--mono);
+    font-size:0.76rem; font-weight:500; padding:8px 16px;
+    border-radius:6px; cursor:pointer; transition:opacity 0.15s,box-shadow 0.15s;
   }
-  #send-btn:hover:not(:disabled) { opacity: 0.82; box-shadow: 0 0 14px var(--accent-glow); }
+  #send-btn:hover:not(:disabled) { opacity:0.82; box-shadow:0 0 14px var(--accent-glow); }
 
-  /* Banned overlay */
+  /* ── Toast notifications ── */
+  #toast {
+    position:fixed; bottom:70px; left:50%; transform:translateX(-50%);
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); font-size:0.75rem; padding:8px 16px;
+    border-radius:8px; z-index:50; opacity:0;
+    transition:opacity 0.2s; pointer-events:none; white-space:nowrap;
+  }
+  #toast.show { opacity:1; }
+  #toast.error { border-color:var(--red); color:var(--red); }
+  #toast.warn  { border-color:var(--yellow); color:var(--yellow); }
+
+  /* ── Banned overlay ── */
   #banned-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-    z-index: 100; align-items: center; justify-content: center;
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:100; align-items:center; justify-content:center;
   }
-  #banned-overlay.show { display: flex; }
-  .banned-card {
-    background: var(--surface); border: 1px solid var(--red);
-    border-radius: 10px; padding: 32px; text-align: center; max-width: 340px;
-  }
-  .banned-card h2 { font-family: var(--display); color: var(--red); margin-bottom: 10px; }
-  .banned-card p { font-size: 0.8rem; color: var(--muted); }
+  #banned-overlay.show { display:flex; }
+  .banned-card { background:var(--surface); border:1px solid var(--red); border-radius:10px; padding:32px; text-align:center; max-width:340px; }
+  .banned-card h2 { font-family:var(--display); color:var(--red); margin-bottom:10px; }
+  .banned-card p { font-size:0.8rem; color:var(--muted); }
 
-  @media (max-width: 600px) {
-    main { grid-template-columns: 1fr; }
-    #sidebar { display: none; }
-    #typing-bar { border-right: none; }
+  @media (max-width:600px) {
+    main { grid-template-columns:1fr; }
+    #sidebar { display:none; }
+    #typing-bar { border-right:none; }
+
   }
 {% endblock %}
 
@@ -148,7 +184,8 @@
     <div class="room-title"><span>#</span>{{ room.name }}</div>
   </div>
   <div class="header-right">
-    <button class="sound-btn on" id="sound-btn" title="Toggle sound">🔔</button>
+    <button class="icon-btn" id="search-btn" title="Search messages">🔍</button>
+    <button class="icon-btn on" id="sound-btn" title="Toggle sound">🔔</button>
     <span class="you-chip">{{ nick }}</span>
     <div class="status">
       <div class="dot" id="dot"></div>
@@ -156,6 +193,13 @@
     </div>
   </div>
 </header>
+
+<!-- Search panel (slides in below header) -->
+<div id="search-panel">
+  <input id="search-input" type="text" placeholder="search messages..." maxlength="100" autocomplete="off" />
+  <span id="search-count"></span>
+  <button class="search-close" id="search-close">✕</button>
+</div>
 
 <main>
   <div id="messages">
@@ -193,7 +237,8 @@
   <button id="send-btn" disabled>Send ↑</button>
 </footer>
 
-<!-- Banned overlay -->
+<div id="toast"></div>
+
 <div id="banned-overlay">
   <div class="banned-card">
     <h2>🚫 Banned</h2>
@@ -205,20 +250,26 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const ROOM    = {{ room.name | tojson }};
-  const MY_NICK = {{ nick | tojson }};
+  const ROOM     = {{ room.name | tojson }};
+  const MY_NICK  = {{ nick | tojson }};
   const MY_TOKEN = document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('wr_token='))?.split('=')[1] || '';
 
-  const messagesEl = document.getElementById('messages');
-  const inputEl    = document.getElementById('msg-input');
-  const sendBtn    = document.getElementById('send-btn');
-  const dotEl      = document.getElementById('dot');
-  const statusEl   = document.getElementById('status-text');
-  const userListEl = document.getElementById('user-list');
-  const countEl    = document.getElementById('online-count');
-  const typingBar  = document.getElementById('typing-bar');
-  const typingText = document.getElementById('typing-text');
-  const soundBtn   = document.getElementById('sound-btn');
+  const messagesEl    = document.getElementById('messages');
+  const inputEl       = document.getElementById('msg-input');
+  const sendBtn       = document.getElementById('send-btn');
+  const dotEl         = document.getElementById('dot');
+  const statusEl      = document.getElementById('status-text');
+  const userListEl    = document.getElementById('user-list');
+  const countEl       = document.getElementById('online-count');
+  const typingBar     = document.getElementById('typing-bar');
+  const typingText    = document.getElementById('typing-text');
+  const soundBtn      = document.getElementById('sound-btn');
+  const searchBtn     = document.getElementById('search-btn');
+  const searchPanel   = document.getElementById('search-panel');
+  const searchInput   = document.getElementById('search-input');
+  const searchCount   = document.getElementById('search-count');
+  const searchClose   = document.getElementById('search-close');
+  const toastEl       = document.getElementById('toast');
   const bannedOverlay = document.getElementById('banned-overlay');
 
   // ── Sound ────────────────────────────────────────────────────────────────
@@ -239,23 +290,113 @@
   function playNotification() {
     if (!soundEnabled) return;
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.setValueAtTime(880, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
     } catch(e) {}
   }
 
-  // ── Typing ───────────────────────────────────────────────────────────────
-  let typingTimer = null;
-  let isTyping = false;
+  // ── Toast ────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, type = '') {
+    toastEl.textContent = msg;
+    toastEl.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.className = ''; }, 3000);
+  }
+
+  // ── Search ───────────────────────────────────────────────────────────────
+  let searchDebounce;
+  let searchOpen = false;
+
+  searchBtn.addEventListener('click', () => {
+    searchOpen = !searchOpen;
+    searchPanel.classList.toggle('open', searchOpen);
+    searchBtn.classList.toggle('search-active', searchOpen);
+    if (searchOpen) {
+      searchInput.focus();
+    } else {
+      clearSearch(true);
+    }
+  });
+
+  searchClose.addEventListener('click', () => {
+    searchOpen = false;
+    searchPanel.classList.remove('open');
+    searchBtn.classList.remove('search-active');
+    clearSearch();
+  });
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    const q = searchInput.value.trim();
+    if (!q || q.length < 2) { clearSearch(); return; }
+    searchDebounce = setTimeout(() => doSearch(q), 300);
+  });
+
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') searchClose.click();
+  });
+
+  async function doSearch(q) {
+    searchCount.textContent = 'searching...';
+    clearSearch(false);
+    try {
+      const url = '/room/' + encodeURIComponent(ROOM) + '/search?q=' + encodeURIComponent(q);
+      console.log('[search] fetching:', url);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      console.log('[search] got:', data.count, 'results');
+      searchCount.textContent = data.count + ' result' + (data.count !== 1 ? 's' : '');
+      if (data.count === 0) { showToast('No messages found for "' + q + '"', 'warn'); return; }
+      showSearchResults(data.results, q);
+    } catch(e) {
+      console.error('[search] error:', e);
+      searchCount.textContent = 'error';
+      showToast('Search error: ' + e.message, 'error');
+    }
+  }
+
+  function showSearchResults(results, q) {
+    document.querySelectorAll('.search-result-block').forEach(el => el.remove());
+    if (!results.length) return;
+    const regex = new RegExp('(' + escRegex(q) + ')', 'gi');
+    const divider = document.createElement('div');
+    divider.className = 'history-divider search-result-block';
+    divider.textContent = '─── search: "' + q + '" (' + results.length + ') ───';
+    messagesEl.appendChild(divider);
+    results.forEach(msg => {
+      const isMe = msg.nick === MY_NICK;
+      const div  = document.createElement('div');
+      div.className = 'message search-result-block highlight';
+      div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
+      const safeText = esc(msg.text).replace(regex, '<mark class="search-match">$1</mark>');
+      div.innerHTML =
+        '<div class="meta">' +
+          '<span class="nick ' + (isMe?'mine':'') + '">' + esc(msg.nick) + '</span>' +
+          '<span class="time" style="color:var(--muted)">' + (msg.date||'') + ' ' + (msg.created_at||'') + '</span>' +
+        '</div>' +
+        '<div class="bubble ' + (isMe?'mine':'') + '">' + safeText + '</div>';
+      messagesEl.appendChild(div);
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function clearSearch(resetInput = true) {
+    document.querySelectorAll('.search-result-block').forEach(el => el.remove());
+    searchCount.textContent = '';
+    if (resetInput) searchInput.value = '';
+  }
+
+  // ── Typing state ─────────────────────────────────────────────────────────
+  let typingTimer, isTyping = false;
   const typingUsers = new Set();
 
   // ── Socket ───────────────────────────────────────────────────────────────
@@ -284,7 +425,10 @@
     socket.disconnect();
   });
 
-  // ── User list ─────────────────────────────────────────────────────────────
+  socket.on('rate_limited', (data) => {
+    showToast('⚠ ' + data.message, 'warn');
+  });
+
   socket.on('user_list', (data) => {
     userListEl.innerHTML = '';
     countEl.textContent = data.users.length;
@@ -305,17 +449,14 @@
     addSystem('← <strong>' + esc(data.nick) + '</strong> left');
   });
 
-  // ── Messages ──────────────────────────────────────────────────────────────
   socket.on('new_message', (data) => {
     typingUsers.delete(data.nick);
     renderTyping();
     const isMe = data.nick === MY_NICK;
     addMessage(data.nick, data.text, data.created_at, isMe);
-    // Play sound only for others' messages
     if (!isMe) playNotification();
   });
 
-  // ── Typing ────────────────────────────────────────────────────────────────
   socket.on('user_typing', (data) => {
     if (data.nick === MY_NICK) return;
     data.typing ? typingUsers.add(data.nick) : typingUsers.delete(data.nick);
@@ -325,28 +466,21 @@
   function renderTyping() {
     const names = [...typingUsers];
     if (!names.length) {
-      typingBar.classList.add('empty');
-      typingText.textContent = '';
+      typingBar.classList.add('empty'); typingText.textContent = '';
     } else {
       typingBar.classList.remove('empty');
       typingText.textContent = names.length === 1
         ? names[0] + ' is typing...'
-        : names.length === 2
-          ? names[0] + ' and ' + names[1] + ' are typing...'
-          : names.length + ' people are typing...';
+        : names.length === 2 ? names[0] + ' and ' + names[1] + ' are typing...'
+        : names.length + ' people are typing...';
     }
   }
 
+  // ── Send ─────────────────────────────────────────────────────────────────
   inputEl.addEventListener('input', () => {
-    if (!isTyping) {
-      isTyping = true;
-      socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: true });
-    }
+    if (!isTyping) { isTyping = true; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: true }); }
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-      isTyping = false;
-      socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false });
-    }, 1500);
+    typingTimer = setTimeout(() => { isTyping = false; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false }); }, 1500);
   });
 
   sendBtn.addEventListener('click', sendMessage);
@@ -373,7 +507,7 @@
         '<span class="nick ' + (isMe?'mine':'') + '">' + esc(nick) + '</span>' +
         '<span class="time">' + t + '</span>' +
       '</div>' +
-      '<div class="bubble ' + (isMe?'mine':'') + '">' + renderText(text) + '</div>';
+      '<div class="bubble ' + (isMe?'mine':'') + '" data-orig="' + esc(text) + '">' + renderText(text) + '</div>';
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
@@ -386,7 +520,6 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  // Highlight @mentions in message text
   function renderText(text) {
     return esc(text).replace(/@([\w_]+)/g, (match, name) => {
       const isMe = name === MY_NICK;
@@ -394,8 +527,7 @@
     });
   }
 
-  function esc(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 </script>
 {% endblock %}

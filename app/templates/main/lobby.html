@@ -2,57 +2,64 @@
 {% block title %}WhisperRoom — Lobby{% endblock %}
 
 {% block extra_css %}
-  body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 24px; }
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100dvh; padding:24px; }
 
-  .card {
-    width: 100%; max-width: 480px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 32px;
-  }
+  .card { width:100%; max-width:480px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:32px; }
 
-  .logo { font-family: var(--display); font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; color: #fff; margin-bottom: 4px; }
-  .logo span { color: var(--accent); }
-  .tagline { font-size: 0.75rem; color: var(--muted); margin-bottom: 28px; }
+  .logo { font-family:var(--display); font-size:2rem; font-weight:800; letter-spacing:-0.04em; color:#fff; margin-bottom:4px; }
+  .logo span { color:var(--accent); }
+  .tagline { font-size:0.75rem; color:var(--muted); margin-bottom:28px; }
+  .you-line { font-size:0.72rem; color:var(--muted); margin-bottom:24px; }
+  .you-line strong { color:var(--green); }
 
-  .you-line { font-size: 0.72rem; color: var(--muted); margin-bottom: 24px; }
-  .you-line strong { color: var(--green); }
+  label { font-size:0.65rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:8px; }
 
-  label { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
-
-  .input-row { display: flex; gap: 8px; margin-bottom: 28px; }
+  .input-row { display:flex; gap:8px; margin-bottom:28px; }
   input[type=text] {
-    flex: 1; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); font-family: var(--mono); font-size: 0.85rem;
-    padding: 9px 14px; border-radius: 6px; outline: none;
-    transition: border-color 0.15s;
+    flex:1; background:var(--bg); border:1px solid var(--border);
+    color:var(--text); font-family:var(--mono); font-size:0.85rem;
+    padding:9px 14px; border-radius:6px; outline:none; transition:border-color 0.15s;
   }
-  input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-  input[type=text]::placeholder { color: var(--muted); }
+  input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-glow); }
+  input[type=text]::placeholder { color:var(--muted); }
 
   button {
-    background: var(--accent); color: #fff; border: none;
-    font-family: var(--mono); font-size: 0.8rem; font-weight: 500;
-    padding: 9px 16px; border-radius: 6px; cursor: pointer;
-    transition: opacity 0.15s, box-shadow 0.15s; white-space: nowrap;
+    background:var(--accent); color:#fff; border:none;
+    font-family:var(--mono); font-size:0.8rem; font-weight:500;
+    padding:9px 16px; border-radius:6px; cursor:pointer;
+    transition:opacity 0.15s, box-shadow 0.15s; white-space:nowrap;
   }
-  button:hover { opacity: 0.82; box-shadow: 0 0 14px var(--accent-glow); }
+  button:hover { opacity:0.82; box-shadow:0 0 14px var(--accent-glow); }
 
-  .divider { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+  .divider { font-size:0.62rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:12px; }
 
-  .room-list { display: flex; flex-direction: column; gap: 6px; }
+  .room-list { display:flex; flex-direction:column; gap:6px; }
   .room-item {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 7px; padding: 10px 14px;
-    transition: border-color 0.15s;
-    text-decoration: none; color: var(--text);
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:7px; padding:10px 14px;
+    transition:border-color 0.15s;
+    text-decoration:none; color:var(--text);
   }
-  .room-item:hover { border-color: var(--accent); opacity: 1; }
-  .room-name { font-size: 0.85rem; font-weight: 500; }
-  .room-name::before { content: '#'; color: var(--accent); margin-right: 3px; }
-  .room-meta { font-size: 0.65rem; color: var(--muted); }
+  .room-item:hover { border-color:var(--accent); opacity:1; }
+  .room-name { font-size:0.85rem; font-weight:500; }
+  .room-name::before { content:'#'; color:var(--accent); margin-right:3px; }
 
-  .empty { font-size: 0.75rem; color: var(--muted); text-align: center; padding: 16px 0; }
+  .room-meta { display:flex; align-items:center; gap:8px; }
+  .msg-count { font-size:0.65rem; color:var(--muted); }
+
+  /* Live online badge */
+  .online-badge {
+    font-size:0.6rem; font-weight:500;
+    padding:2px 7px; border-radius:10px;
+    border:1px solid rgba(52,211,153,0.3);
+    color:var(--green);
+    display:none;   /* hidden until socket sends count */
+  }
+  .online-badge.visible { display:inline-block; }
+  .online-badge::before { content:'● '; font-size:0.5rem; }
+
+  .empty { font-size:0.75rem; color:var(--muted); text-align:center; padding:16px 0; }
 {% endblock %}
 
 {% block body %}
@@ -74,9 +81,12 @@
     <div class="divider">Active rooms</div>
     <div class="room-list">
       {% for room in rooms %}
-        <a class="room-item" href="/room/{{ room.name }}">
+        <a class="room-item" href="/room/{{ room.name }}" data-room="{{ room.name }}">
           <span class="room-name">{{ room.name }}</span>
-          <span class="room-meta">{{ room.message_count }} msgs</span>
+          <span class="room-meta">
+            <span class="online-badge" id="badge-{{ room.name }}">0 online</span>
+            <span class="msg-count">{{ room.message_count }} msgs</span>
+          </span>
         </a>
       {% endfor %}
     </div>
@@ -84,4 +94,30 @@
     <div class="empty">No rooms yet — create the first one ☝️</div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io();
+
+  socket.on('connect', () => {
+    // Subscribe to live room counts
+    socket.emit('lobby_join');
+  });
+
+  socket.on('online_counts', (counts) => {
+    // counts = { room_name: online_count, ... }
+    document.querySelectorAll('.online-badge').forEach(badge => {
+      const room = badge.id.replace('badge-', '');
+      const count = counts[room] || 0;
+      if (count > 0) {
+        badge.textContent = count + ' online';
+        badge.classList.add('visible');
+      } else {
+        badge.classList.remove('visible');
+      }
+    });
+  });
+</script>
 {% endblock %}
