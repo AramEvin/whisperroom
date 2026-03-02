@@ -78,14 +78,13 @@ pipeline {
             steps {
                 echo '🚀 Deploying application...'
                 sh '''
-                    # Bring up new containers with zero-downtime restart
-                    docker compose -f ${COMPOSE_FILE} up -d --build
-
-                    # Wait for app to be healthy
-                    echo "⏳ Waiting for app to start..."
-                    sleep 5
-
-                    # Health check
+                    set -x
+                    echo "COMPOSE_FILE=${COMPOSE_FILE}"
+                    docker compose version
+                    docker ps
+                    docker compose -f ${COMPOSE_FILE} config
+                    docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
+                    echo "Docker exit code: $?"
                     docker compose -f ${COMPOSE_FILE} ps
                     echo "✅ Deploy complete"
                 '''
