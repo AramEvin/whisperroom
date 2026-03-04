@@ -102,7 +102,7 @@ pipeline {
                 sh '''
                     # Try to reach the app via nginx
                     sleep 3
-                    curl -f http://192.168.121.21:80 \
+                    curl -f http://localhost:80 \
                         --max-time 10 \
                         --retry 3 \
                         --retry-delay 3 \
