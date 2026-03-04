@@ -19,6 +19,11 @@ pipeline {
             steps {
                 echo '📥 Checking out source code...'
                 checkout scm
+                script {
+                    // Print exact branch name so we can debug
+                    echo "🌿 Branch: ${env.GIT_BRANCH}"
+                    echo "🌿 BRANCH_NAME: ${env.BRANCH_NAME}"
+                }
             }
         }
 
@@ -63,7 +68,13 @@ pipeline {
         }
 
         stage('Version') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
+            }
             steps {
                 echo '🏷️  Calculating version...'
                 script {
@@ -80,7 +91,13 @@ pipeline {
         }
 
         stage('Push to Docker Hub') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
+            }
             steps {
                 echo '🚀 Pushing to Docker Hub...'
                 withCredentials([usernamePassword(
@@ -103,7 +120,13 @@ pipeline {
         }
 
         stage('Deploy') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
+            }
             steps {
                 echo '🚀 Deploying...'
                 sh '''
@@ -116,7 +139,13 @@ pipeline {
         }
 
         stage('Health Check') {
-            when { branch 'main' }
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { env.GIT_BRANCH == 'origin/main' }
+                    expression { env.GIT_BRANCH == 'main' }
+                }
+            }
             steps {
                 echo '❤️  Health check...'
                 sh '''
