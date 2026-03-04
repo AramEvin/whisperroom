@@ -20,9 +20,7 @@ pipeline {
                 echo '📥 Checking out source code...'
                 checkout scm
                 script {
-                    // Print exact branch name so we can debug
                     echo "🌿 Branch: ${env.GIT_BRANCH}"
-                    echo "🌿 BRANCH_NAME: ${env.BRANCH_NAME}"
                 }
             }
         }
@@ -129,12 +127,28 @@ pipeline {
             }
             steps {
                 echo '🚀 Deploying...'
-                sh '''
-                    docker compose -f ${COMPOSE_FILE} up -d --build
-                    sleep 5
-                    docker compose -f ${COMPOSE_FILE} ps
-                    echo "✅ Deploy complete"
-                '''
+                // Inject .env file securely from Jenkins credentials store
+                withCredentials([file(
+                    credentialsId: 'whisperroom-env',
+                    variable: 'ENV_FILE'
+                )]) {
+                    sh '''
+                        # Copy .env from Jenkins credentials into workspace
+                        cp "${ENV_FILE}" .env
+                        echo "✅ .env file injected"
+
+                        # Deploy
+                        docker compose -f ${COMPOSE_FILE} up -d --build
+
+                        # Remove .env from workspace immediately after deploy
+                        rm -f .env
+                        echo "✅ .env removed from workspace"
+
+                        sleep 5
+                        docker compose -f ${COMPOSE_FILE} ps
+                        echo "✅ Deploy complete"
+                    '''
+                }
             }
         }
 
@@ -166,6 +180,8 @@ pipeline {
         }
         failure {
             echo '❌ Pipeline failed — check logs above'
+            // Clean up .env if deploy failed midway
+            sh 'rm -f .env || true'
             sh 'docker compose -f ${COMPOSE_FILE} ps || true'
         }
         always {
