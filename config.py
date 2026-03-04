@@ -17,14 +17,22 @@ class DevelopmentConfig(Config):
     DEBUG = True
 
 
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG   = False
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    SECRET_KEY     = 'test-secret'
+    ADMIN_PASSWORD = 'testpass'
+
+
 class ProductionConfig(Config):
     DEBUG = False
-    # Trust the X-Forwarded-For header from nginx
     PREFERRED_URL_SCHEME = 'https'
 
 
 config = {
     'development': DevelopmentConfig,
+    'testing':     TestingConfig,
     'production':  ProductionConfig,
     'default':     DevelopmentConfig,
 }

@@ -1,51 +1,56 @@
 """
 Basic tests for WhisperRoom.
-Run: pytest tests/ -v
+Run from project root: pytest tests/ -v
 """
-import pytest
 import os
+import sys
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Set test env BEFORE any app imports
 os.environ['FLASK_ENV']      = 'testing'
 os.environ['DATABASE_URL']   = 'sqlite:///:memory:'
 os.environ['SECRET_KEY']     = 'test-secret'
 os.environ['ADMIN_PASSWORD'] = 'testpass'
 
-from run import app as flask_app
-from app import db as _db
+import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def app():
-    flask_app.config['TESTING']   = True
+    from app import create_app, db
+    flask_app = create_app('testing')
+    flask_app.config['TESTING'] = True
     flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+
     with flask_app.app_context():
-        _db.create_all()
+        db.create_all()
         yield flask_app
-        _db.drop_all()
+        db.session.remove()
+        db.drop_all()
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def client(app):
     return app.test_client()
 
 
-# ── Route tests ──────────────────────────────────────────────────────────────
+# ── Route tests ───────────────────────────────────────────────────────────────
 
 def test_lobby_loads(client):
-    """Lobby page returns 200."""
     r = client.get('/')
     assert r.status_code == 200
     assert b'WhisperRoom' in r.data
 
 
 def test_create_room(client):
-    """Creating a room redirects to the room page."""
     r = client.post('/create-room', data={'room_name': 'testroom'})
     assert r.status_code == 302
-    assert b'testroom' in r.headers['Location'].encode()
+    assert 'testroom' in r.headers['Location']
 
 
 def test_room_page_loads(client):
-    """Room page loads after creation."""
     client.post('/create-room', data={'room_name': 'hello'})
     r = client.get('/room/hello')
     assert r.status_code == 200
@@ -53,31 +58,32 @@ def test_room_page_loads(client):
 
 
 def test_missing_room_returns_404(client):
-    """Non-existent room returns 404."""
     r = client.get('/room/doesnotexist')
     assert r.status_code == 404
 
 
 def test_admin_login_page(client):
-    """Admin login page loads."""
     r = client.get('/admin/login')
     assert r.status_code == 200
 
 
 def test_admin_wrong_password(client):
-    """Wrong admin password shows error."""
     r = client.post('/admin/login', data={'password': 'wrongpass'})
     assert b'Wrong password' in r.data
 
 
 def test_admin_correct_password(client):
-    """Correct admin password redirects to dashboard."""
     r = client.post('/admin/login', data={'password': 'testpass'})
     assert r.status_code == 302
 
 
+def test_admin_requires_login(client):
+    r = client.get('/admin/')
+    assert r.status_code == 302
+    assert 'login' in r.headers['Location']
+
+
 def test_search_endpoint(client):
-    """Search endpoint returns JSON."""
     client.post('/create-room', data={'room_name': 'searchroom'})
     r = client.get('/room/searchroom/search?q=hello')
     assert r.status_code == 200
@@ -87,7 +93,6 @@ def test_search_endpoint(client):
 
 
 def test_search_too_short(client):
-    """Search with 1 char returns empty results."""
     client.post('/create-room', data={'room_name': 'searchroom2'})
     r = client.get('/room/searchroom2/search?q=a')
     data = r.get_json()
@@ -97,7 +102,6 @@ def test_search_too_short(client):
 # ── Model tests ───────────────────────────────────────────────────────────────
 
 def test_room_get_or_create(app):
-    """Room.get_or_create creates then returns same room."""
     from app.models import Room
     with app.app_context():
         r1 = Room.get_or_create('myroom')
@@ -106,9 +110,9 @@ def test_room_get_or_create(app):
 
 
 def test_user_session_persistence(app):
-    """UserSession returns same nick for same token."""
     from app.models import UserSession
     from app.utils import generate_nick, generate_token
+    from app import db
     with app.app_context():
         token = generate_token()
         s1 = UserSession.get_or_create(token, generate_nick)
@@ -117,7 +121,6 @@ def test_user_session_persistence(app):
 
 
 def test_message_search(app):
-    """Message.search finds matching messages."""
     from app.models import Room, Message
     from app import db
     with app.app_context():
@@ -128,3 +131,16 @@ def test_message_search(app):
         results = Message.search(room.id, 'hello')
         assert len(results) == 1
         assert results[0].text == 'hello world'
+
+
+def test_ban_user(app):
+    from app.models import UserSession
+    from app.utils import generate_nick, generate_token
+    from app import db
+    with app.app_context():
+        token = generate_token()
+        s = UserSession.get_or_create(token, generate_nick)
+        s.is_banned = True
+        db.session.commit()
+        reloaded = UserSession.query.filter_by(token=token).first()
+        assert reloaded.is_banned is True
