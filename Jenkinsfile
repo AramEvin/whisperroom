@@ -29,7 +29,7 @@ pipeline {
             steps {
                 echo '🔍 Running syntax checks...'
                 sh '''
-                    find app -name "*.py" -exec python3 -m py_compile {} \\;
+                    find app -name "*.py" -exec python -m py_compile {} \\;
                     echo "✅ Python syntax OK"
                     test -f config.py        && echo "✅ config.py found"
                     test -f requirements.txt && echo "✅ requirements.txt found"
