@@ -5,10 +5,6 @@ pipeline {
         APP_NAME     = 'whisperroom'
         IMAGE_NAME   = 'whisperroom-app'
         COMPOSE_FILE = 'docker-compose.yml'
-
-        // Set your Docker Hub username in Jenkins credentials
-        DOCKERHUB_USER = credentials('DOCKERHUB_USER')
-        DOCKERHUB_PASS = credentials('DOCKERHUB_PASS')
     }
 
     options {
@@ -19,7 +15,6 @@ pipeline {
 
     stages {
 
-        // ── 1. Checkout ───────────────────────────────────────────────────
         stage('Checkout') {
             steps {
                 echo '📥 Checking out source code...'
@@ -27,7 +22,6 @@ pipeline {
             }
         }
 
-        // ── 2. Lint ───────────────────────────────────────────────────────
         stage('Lint') {
             steps {
                 echo '🔍 Running syntax checks...'
@@ -42,7 +36,6 @@ pipeline {
             }
         }
 
-        // ── 3. Build ──────────────────────────────────────────────────────
         stage('Build') {
             steps {
                 echo '🐳 Building Docker image...'
@@ -53,7 +46,6 @@ pipeline {
             }
         }
 
-        // ── 4. Test ───────────────────────────────────────────────────────
         stage('Test') {
             steps {
                 echo '🧪 Running tests...'
@@ -64,89 +56,56 @@ pipeline {
                         -e SECRET_KEY=test-secret \
                         -e ADMIN_PASSWORD=testpass \
                         ${IMAGE_NAME} \
-                        python -m pytest tests/ -v --tb=short 2>/dev/null || \
-                        echo "⚠️  No tests found — skipping"
+                        python -m pytest tests/ -v --tb=short || \
+                        echo "⚠️  Tests failed or not found"
                 '''
             }
         }
 
-        // ── 5. Version & Tag ──────────────────────────────────────────────
-        stage('Version & Tag') {
+        stage('Version') {
             when { branch 'main' }
             steps {
                 echo '🏷️  Calculating version...'
                 script {
-                    // Read current version from VERSION file, default to 1.0
-                    def currentVersion = '1.0'
-                    if (fileExists('VERSION')) {
-                        currentVersion = readFile('VERSION').trim()
-                    }
-
-                    // Split into major.minor and bump minor
-                    def parts = currentVersion.tokenize('.')
-                    def major  = parts[0].toInteger()
-                    def minor  = parts[1].toInteger()
-
-                    // Bump minor on every build, bump major manually
-                    def newMinor   = minor + 1
-                    def newVersion = "${major}.${newMinor}"
-
-                    // Save new version
+                    def currentVersion = fileExists('VERSION') ? readFile('VERSION').trim() : '1.0'
+                    def parts      = currentVersion.tokenize('.')
+                    def major      = parts[0].toInteger()
+                    def minor      = parts[1].toInteger()
+                    def newVersion = "${major}.${minor + 1}"
                     writeFile file: 'VERSION', text: newVersion
                     env.IMAGE_VERSION = newVersion
-
                     echo "📦 Version: ${currentVersion} → ${newVersion}"
                 }
             }
         }
 
-        // ── 6. Push to Docker Hub ─────────────────────────────────────────
         stage('Push to Docker Hub') {
             when { branch 'main' }
             steps {
-                echo "🚀 Pushing to Docker Hub as ${DOCKERHUB_USER}/whisperroom..."
-                sh '''
-                    # Login to Docker Hub
-                    echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
-
-                    # Tag with version number and latest
-                    docker tag ${IMAGE_NAME} ${DOCKERHUB_USER}/whisperroom:${IMAGE_VERSION}
-                    docker tag ${IMAGE_NAME} ${DOCKERHUB_USER}/whisperroom:latest
-
-                    # Push both tags
-                    docker push ${DOCKERHUB_USER}/whisperroom:${IMAGE_VERSION}
-                    docker push ${DOCKERHUB_USER}/whisperroom:latest
-
-                    # Logout for security
-                    docker logout
-
-                    echo "✅ Pushed:"
-                    echo "   ${DOCKERHUB_USER}/whisperroom:${IMAGE_VERSION}"
-                    echo "   ${DOCKERHUB_USER}/whisperroom:latest"
-                '''
+                echo '🚀 Pushing to Docker Hub...'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DH_USER',
+                    passwordVariable: 'DH_PASS'
+                )]) {
+                    sh '''
+                        echo "${DH_PASS}" | docker login -u "${DH_USER}" --password-stdin
+                        docker tag ${IMAGE_NAME} ${DH_USER}/whisperroom:${IMAGE_VERSION}
+                        docker tag ${IMAGE_NAME} ${DH_USER}/whisperroom:latest
+                        docker push ${DH_USER}/whisperroom:${IMAGE_VERSION}
+                        docker push ${DH_USER}/whisperroom:latest
+                        docker logout
+                        echo "✅ Pushed ${DH_USER}/whisperroom:${IMAGE_VERSION}"
+                        echo "✅ Pushed ${DH_USER}/whisperroom:latest"
+                    '''
+                }
             }
         }
 
-        // ── 7. Commit VERSION file back to git ────────────────────────────
-        stage('Commit Version') {
-            when { branch 'main' }
-            steps {
-                echo '📝 Saving version file...'
-                sh '''
-                    git config user.email "jenkins@whisperroom"
-                    git config user.name  "Jenkins"
-                    git add VERSION
-                    git diff --cached --quiet || git commit -m "ci: bump version to ${IMAGE_VERSION} [skip ci]"
-                    git push origin main || true
-                '''
-            }
-        }
-
-        // ── 8. Deploy ─────────────────────────────────────────────────────
         stage('Deploy') {
             when { branch 'main' }
             steps {
-                echo '🚀 Deploying application...'
+                echo '🚀 Deploying...'
                 sh '''
                     docker compose -f ${COMPOSE_FILE} up -d --build
                     sleep 5
@@ -156,17 +115,14 @@ pipeline {
             }
         }
 
-        // ── 9. Health Check ───────────────────────────────────────────────
         stage('Health Check') {
             when { branch 'main' }
             steps {
-                echo '❤️  Running health check...'
+                echo '❤️  Health check...'
                 sh '''
                     sleep 3
                     curl -f http://localhost:80 \
-                        --max-time 10 \
-                        --retry 3 \
-                        --retry-delay 3 \
+                        --max-time 10 --retry 3 --retry-delay 3 \
                         -o /dev/null -s \
                         && echo "✅ App is responding" \
                         || echo "⚠️  Health check failed"
@@ -184,7 +140,6 @@ pipeline {
             sh 'docker compose -f ${COMPOSE_FILE} ps || true'
         }
         always {
-            echo '🧹 Cleaning workspace...'
             cleanWs()
         }
     }
