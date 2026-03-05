@@ -20,6 +20,9 @@
   .room-title span { color:var(--accent); }
   .header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .you-chip { font-size:0.68rem; color:var(--green); border:1px solid rgba(52,211,153,0.3); padding:3px 8px; border-radius:20px; }
+  .role-chip { font-size:0.62rem; padding:2px 7px; border-radius:10px; border:1px solid; }
+  .role-chip.owner { color:#f59e0b; border-color:rgba(245,158,11,0.4); }
+  .role-chip.member { color:var(--muted); border-color:var(--border); }
   .status { display:flex; align-items:center; gap:6px; font-size:0.7rem; color:var(--muted); }
   .dot { width:6px; height:6px; border-radius:50%; background:var(--muted); transition:background 0.3s,box-shadow 0.3s; flex-shrink:0; }
   .dot.connected { background:var(--green); box-shadow:0 0 7px var(--green); animation:pulse 2s infinite; }
@@ -34,9 +37,8 @@
   .icon-btn:hover { border-color:var(--accent); color:var(--accent); }
   .icon-btn.on { border-color:var(--green); color:var(--green); }
   .icon-btn.search-active { border-color:var(--yellow); color:var(--yellow); }
-
-  /* ── Layout ── */
-  main { display:grid; grid-template-columns:1fr 210px; overflow:hidden; min-height:0; position:relative; }
+  .icon-btn.leave { border-color:var(--red); color:var(--red); }
+  .icon-btn.leave:hover { background:rgba(248,113,113,0.1); }
 
   /* ── Search panel ── */
   #search-panel {
@@ -55,11 +57,11 @@
   #search-input:focus { border-color:var(--yellow); box-shadow:0 0 0 2px rgba(251,191,36,0.15); }
   #search-input::placeholder { color:var(--muted); }
   #search-count { font-size:0.7rem; color:var(--muted); white-space:nowrap; min-width:60px; }
-  .search-close {
-    background:transparent; border:none; color:var(--muted); font-size:1rem;
-    cursor:pointer; padding:4px 6px; border-radius:4px;
-  }
+  .search-close { background:transparent; border:none; color:var(--muted); font-size:1rem; cursor:pointer; padding:4px 6px; border-radius:4px; }
   .search-close:hover { color:var(--text); }
+
+  /* ── Layout ── */
+  main { display:grid; grid-template-columns:1fr 220px; overflow:hidden; min-height:0; position:relative; }
 
   /* ── Messages ── */
   #messages {
@@ -80,6 +82,7 @@
   .meta { display:flex; align-items:center; gap:6px; }
   .nick { font-size:0.68rem; font-weight:500; color:var(--accent); }
   .nick.mine { color:var(--green); }
+  .nick.owner-nick::after { content:'👑'; font-size:0.55rem; margin-left:3px; }
   .time { font-size:0.6rem; color:transparent; transition:color 0.2s; }
   .message:hover .time { color:var(--muted); }
 
@@ -93,21 +96,21 @@
   .message:hover .bubble { border-color:#2a2a40; }
   .message:hover .bubble.mine { border-color:var(--accent); }
 
-  /* Search match highlight */
   .search-match { background:rgba(251,191,36,0.25); border-radius:2px; padding:0 1px; }
   .mention { color:var(--yellow); font-weight:500; background:rgba(251,191,36,0.1); padding:0 2px; border-radius:3px; }
   .mention.me { color:var(--green); background:rgba(52,211,153,0.12); }
-
   .history-divider { text-align:center; font-size:0.62rem; color:var(--muted); padding:6px 0 10px; letter-spacing:0.1em; }
 
   /* ── Sidebar ── */
-  #sidebar { padding:14px; overflow-y:auto; }
-  .sidebar-title {
+  #sidebar { padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+  .sidebar-section-title {
     font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase;
     color:var(--muted); margin-bottom:8px;
     display:flex; align-items:center; justify-content:space-between;
   }
-  .online-count { background:var(--border); color:var(--green); font-size:0.57rem; padding:2px 6px; border-radius:10px; }
+  .count-badge { background:var(--border); color:var(--green); font-size:0.57rem; padding:2px 6px; border-radius:10px; }
+
+  /* Online users */
   #user-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
   #user-list li {
     font-size:0.73rem; color:var(--text); display:flex; align-items:center;
@@ -116,6 +119,42 @@
   }
   #user-list li::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 4px var(--green); flex-shrink:0; }
   .you-badge { font-size:0.57rem; color:var(--accent); border:1px solid var(--accent); padding:1px 4px; border-radius:3px; margin-left:auto; flex-shrink:0; }
+
+  /* Members list */
+  .member-list { display:flex; flex-direction:column; gap:6px; }
+  .member-item {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:6px; padding:7px 10px;
+    display:flex; align-items:center; gap:7px;
+  }
+  .member-nick { font-size:0.73rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .member-role { font-size:0.57rem; padding:1px 5px; border-radius:8px; border:1px solid; flex-shrink:0; }
+  .member-role.owner { color:#f59e0b; border-color:rgba(245,158,11,0.4); }
+  .member-role.member { color:var(--muted); border-color:var(--border); }
+  .member-actions { display:flex; gap:4px; }
+  .member-btn {
+    font-size:0.58rem; padding:2px 5px; border-radius:4px;
+    border:1px solid; background:transparent; cursor:pointer;
+    font-family:var(--mono); transition:background 0.15s;
+  }
+  .member-btn.kick { color:var(--red); border-color:rgba(248,113,113,0.3); }
+  .member-btn.kick:hover { background:rgba(248,113,113,0.1); }
+  .member-btn.promote { color:#f59e0b; border-color:rgba(245,158,11,0.3); }
+  .member-btn.promote:hover { background:rgba(245,158,11,0.1); }
+
+  /* Join banner */
+  #join-banner {
+    background:rgba(124,58,237,0.08); border:1px solid var(--accent-dim);
+    border-radius:8px; padding:12px 14px; margin:12px 18px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .join-banner-text { font-size:0.75rem; color:var(--muted); }
+  .join-btn {
+    background:var(--accent); color:#fff; border:none;
+    font-family:var(--mono); font-size:0.75rem; padding:6px 14px;
+    border-radius:6px; cursor:pointer; transition:opacity 0.15s; white-space:nowrap;
+  }
+  .join-btn:hover { opacity:0.82; }
 
   /* ── Typing bar ── */
   #typing-bar {
@@ -149,7 +188,7 @@
   }
   #send-btn:hover:not(:disabled) { opacity:0.82; box-shadow:0 0 14px var(--accent-glow); }
 
-  /* ── Toast notifications ── */
+  /* ── Toast ── */
   #toast {
     position:fixed; bottom:70px; left:50%; transform:translateX(-50%);
     background:var(--surface); border:1px solid var(--border);
@@ -175,7 +214,6 @@
     main { grid-template-columns:1fr; }
     #sidebar { display:none; }
     #typing-bar { border-right:none; }
-
   }
 {% endblock %}
 
@@ -189,6 +227,16 @@
     <button class="icon-btn" id="search-btn" title="Search messages">🔍</button>
     <button class="icon-btn on" id="sound-btn" title="Toggle sound">🔔</button>
     <span class="you-chip">{{ nick }}</span>
+    {% if is_member %}
+      {% if is_owner %}
+        <span class="role-chip owner">👑 owner</span>
+      {% else %}
+        <span class="role-chip member">member</span>
+      {% endif %}
+      <form method="POST" action="/room/{{ room.name }}/leave" style="margin:0">
+        <button type="submit" class="icon-btn leave" title="Leave room">Leave</button>
+      </form>
+    {% endif %}
     <div class="status">
       <div class="dot" id="dot"></div>
       <span id="status-text">connecting</span>
@@ -196,7 +244,6 @@
   </div>
 </header>
 
-<!-- Search panel (slides in below header) -->
 <div id="search-panel">
   <input id="search-input" type="text" placeholder="search messages..." maxlength="100" autocomplete="off" />
   <span id="search-count"></span>
@@ -221,11 +268,39 @@
   </div>
 
   <aside id="sidebar">
-    <div class="sidebar-title">
-      Online
-      <span class="online-count" id="online-count">0</span>
+    <!-- Online now -->
+    <div>
+      <div class="sidebar-section-title">
+        Online <span class="count-badge" id="online-count">0</span>
+      </div>
+      <ul id="user-list"></ul>
     </div>
-    <ul id="user-list"></ul>
+
+    <!-- Members -->
+    <div>
+      <div class="sidebar-section-title">
+        Members <span class="count-badge">{{ members|length }}</span>
+      </div>
+      <div class="member-list" id="member-list">
+        {% for m in members %}
+        <div class="member-item">
+          <span class="member-nick">{{ m.session.nick }}</span>
+          <span class="member-role {{ m.role }}">{{ m.role }}</span>
+          {% if is_owner and not m.is_owner and m.session.nick != nick %}
+          <div class="member-actions">
+            <form method="POST" action="/room/{{ room.name }}/promote/{{ m.id }}" style="margin:0">
+              <button class="member-btn promote" type="submit" title="Make owner">👑</button>
+            </form>
+            <form method="POST" action="/room/{{ room.name }}/remove/{{ m.id }}" style="margin:0"
+                  onsubmit="return confirm('Remove {{ m.session.nick }} from room?')">
+              <button class="member-btn kick" type="submit" title="Remove">✕</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </aside>
 </main>
 
@@ -235,12 +310,21 @@
 </div>
 
 <footer>
-  <input id="msg-input" type="text" placeholder="message #{{ room.name }}..." maxlength="500" autocomplete="off" disabled />
-  <button id="send-btn" disabled>Send ↑</button>
+  {% if is_member %}
+    <input id="msg-input" type="text" placeholder="message #{{ room.name }}..." maxlength="500" autocomplete="off" disabled />
+    <button id="send-btn" disabled>Send ↑</button>
+  {% else %}
+    <form method="POST" action="/room/{{ room.name }}/join" style="flex:1;display:flex;gap:9px">
+      <input type="text" placeholder="join to start chatting..." disabled
+             style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:0.83rem;padding:8px 13px;border-radius:6px;" />
+      <button type="submit" style="background:var(--accent);color:#fff;border:none;font-family:var(--mono);font-size:0.76rem;font-weight:500;padding:8px 16px;border-radius:6px;cursor:pointer;">
+        Join Room →
+      </button>
+    </form>
+  {% endif %}
 </footer>
 
 <div id="toast"></div>
-
 <div id="banned-overlay">
   <div class="banned-card">
     <h2>🚫 Banned</h2>
@@ -252,9 +336,10 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-  const ROOM     = {{ room.name | tojson }};
-  const MY_NICK  = {{ nick | tojson }};
-  const MY_TOKEN = document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('wr_token='))?.split('=')[1] || '';
+  const ROOM      = {{ room.name | tojson }};
+  const MY_NICK   = {{ nick | tojson }};
+  const IS_MEMBER = {{ 'true' if is_member else 'false' }};
+  const MY_TOKEN  = document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('wr_token='))?.split('=')[1] || '';
 
   const messagesEl    = document.getElementById('messages');
   const inputEl       = document.getElementById('msg-input');
@@ -277,24 +362,20 @@
   // ── Sound ────────────────────────────────────────────────────────────────
   let soundEnabled = localStorage.getItem('wr_sound') !== 'off';
   updateSoundBtn();
-
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
     localStorage.setItem('wr_sound', soundEnabled ? 'on' : 'off');
     updateSoundBtn();
   });
-
   function updateSoundBtn() {
     soundBtn.textContent = soundEnabled ? '🔔' : '🔕';
     soundBtn.classList.toggle('on', soundEnabled);
   }
-
   function playNotification() {
     if (!soundEnabled) return;
     try {
-      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.setValueAtTime(880, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
@@ -304,132 +385,117 @@
     } catch(e) {}
   }
 
-  // ── Toast ────────────────────────────────────────────────────────────────
+  // ── Toast ─────────────────────────────────────────────────────────────────
   let toastTimer;
-  function showToast(msg, type = '') {
+  function showToast(msg, type='') {
     toastEl.textContent = msg;
     toastEl.className = 'show ' + type;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { toastEl.className = ''; }, 3000);
   }
 
-  // ── Search ───────────────────────────────────────────────────────────────
-  let searchDebounce;
-  let searchOpen = false;
-
+  // ── Search ────────────────────────────────────────────────────────────────
+  let searchDebounce, searchOpen = false;
   searchBtn.addEventListener('click', () => {
     searchOpen = !searchOpen;
     searchPanel.classList.toggle('open', searchOpen);
     searchBtn.classList.toggle('search-active', searchOpen);
-    if (searchOpen) {
-      searchInput.focus();
-    } else {
-      clearSearch(true);
-    }
+    if (searchOpen) searchInput.focus(); else clearSearch();
   });
-
   searchClose.addEventListener('click', () => {
     searchOpen = false;
     searchPanel.classList.remove('open');
     searchBtn.classList.remove('search-active');
     clearSearch();
   });
-
   searchInput.addEventListener('input', () => {
     clearTimeout(searchDebounce);
     const q = searchInput.value.trim();
     if (!q || q.length < 2) { clearSearch(); return; }
     searchDebounce = setTimeout(() => doSearch(q), 300);
   });
-
-  searchInput.addEventListener('keydown', e => {
-    if (e.key === 'Escape') searchClose.click();
-  });
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') searchClose.click(); });
 
   async function doSearch(q) {
     searchCount.textContent = 'searching...';
-    clearSearch(false);
+    clearHighlights();
     try {
-      const url = '/room/' + encodeURIComponent(ROOM) + '/search?q=' + encodeURIComponent(q);
-      console.log('[search] fetching:', url);
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const res = await fetch(`/room/${ROOM}/search?q=` + encodeURIComponent(q));
       const data = await res.json();
-      console.log('[search] got:', data.count, 'results');
       searchCount.textContent = data.count + ' result' + (data.count !== 1 ? 's' : '');
-      if (data.count === 0) { showToast('No messages found for "' + q + '"', 'warn'); return; }
+      if (data.count === 0) { showToast('No results for "' + q + '"', 'warn'); return; }
+      highlightInDom(q);
       showSearchResults(data.results, q);
-    } catch(e) {
-      console.error('[search] error:', e);
-      searchCount.textContent = 'error';
-      showToast('Search error: ' + e.message, 'error');
-    }
+    } catch(e) { searchCount.textContent = 'error'; showToast('Search failed', 'error'); }
   }
-
+  function highlightInDom(q) {
+    document.querySelectorAll('.message:not(.system) .bubble').forEach(bubble => {
+      const orig = bubble.getAttribute('data-orig') || bubble.textContent;
+      bubble.setAttribute('data-orig', orig);
+      const regex = new RegExp('(' + escRegex(q) + ')', 'gi');
+      bubble.innerHTML = esc(orig).replace(regex, '<mark class="search-match">$1</mark>');
+      bubble.closest('.message').classList.toggle('highlight', regex.test(orig));
+    });
+  }
   function showSearchResults(results, q) {
     document.querySelectorAll('.search-result-block').forEach(el => el.remove());
     if (!results.length) return;
-    const regex = new RegExp('(' + escRegex(q) + ')', 'gi');
     const divider = document.createElement('div');
     divider.className = 'history-divider search-result-block';
-    divider.textContent = '─── search: "' + q + '" (' + results.length + ') ───';
+    divider.textContent = `─── search: "${q}" ───`;
     messagesEl.appendChild(divider);
     results.forEach(msg => {
       const isMe = msg.nick === MY_NICK;
-      const div  = document.createElement('div');
+      const div = document.createElement('div');
       div.className = 'message search-result-block highlight';
       div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
-      const safeText = esc(msg.text).replace(regex, '<mark class="search-match">$1</mark>');
+      const regex = new RegExp('(' + escRegex(q) + ')', 'gi');
+      const highlighted = esc(msg.text).replace(regex, '<mark class="search-match">$1</mark>');
       div.innerHTML =
-        '<div class="meta">' +
-          '<span class="nick ' + (isMe?'mine':'') + '">' + esc(msg.nick) + '</span>' +
-          '<span class="time" style="color:var(--muted)">' + (msg.date||'') + ' ' + (msg.created_at||'') + '</span>' +
-        '</div>' +
-        '<div class="bubble ' + (isMe?'mine':'') + '">' + safeText + '</div>';
+        '<div class="meta"><span class="nick ' + (isMe?'mine':'') + '">' + esc(msg.nick) + '</span>' +
+        '<span class="time" style="color:var(--muted)">' + msg.date + ' ' + msg.created_at + '</span></div>' +
+        '<div class="bubble ' + (isMe?'mine':'') + '">' + highlighted + '</div>';
       messagesEl.appendChild(div);
     });
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
-
-  function clearSearch(resetInput = true) {
+  function clearHighlights() {
+    document.querySelectorAll('.message .bubble').forEach(bubble => {
+      const orig = bubble.getAttribute('data-orig');
+      if (orig) { bubble.textContent = orig; bubble.removeAttribute('data-orig'); }
+      bubble.closest('.message').classList.remove('highlight');
+    });
     document.querySelectorAll('.search-result-block').forEach(el => el.remove());
     searchCount.textContent = '';
-    if (resetInput) searchInput.value = '';
   }
+  function clearSearch() { searchInput.value = ''; clearHighlights(); }
 
-  // ── Typing state ─────────────────────────────────────────────────────────
+  // ── Typing ────────────────────────────────────────────────────────────────
   let typingTimer, isTyping = false;
   const typingUsers = new Set();
 
-  // ── Socket ───────────────────────────────────────────────────────────────
+  // ── Socket ────────────────────────────────────────────────────────────────
   const socket = io();
 
   socket.on('connect', () => {
     dotEl.classList.add('connected');
     statusEl.textContent = 'connected';
-    inputEl.disabled = false;
-    sendBtn.disabled = false;
+    if (IS_MEMBER && inputEl) { inputEl.disabled = false; sendBtn.disabled = false; }
     socket.emit('join', { room: ROOM, nick: MY_NICK, token: MY_TOKEN });
     messagesEl.scrollTop = messagesEl.scrollHeight;
   });
-
   socket.on('disconnect', () => {
     dotEl.classList.remove('connected');
     statusEl.textContent = 'reconnecting...';
-    inputEl.disabled = true;
-    sendBtn.disabled = true;
+    if (inputEl) { inputEl.disabled = true; sendBtn.disabled = true; }
   });
-
   socket.on('banned', () => {
     bannedOverlay.classList.add('show');
-    inputEl.disabled = true;
-    sendBtn.disabled = true;
+    if (inputEl) { inputEl.disabled = true; sendBtn.disabled = true; }
     socket.disconnect();
   });
-
-  socket.on('rate_limited', (data) => {
-    showToast('⚠ ' + data.message, 'warn');
-  });
+  socket.on('not_member', (data) => { showToast('⚠ ' + data.message, 'warn'); });
+  socket.on('rate_limited', (data) => { showToast('⚠ ' + data.message, 'warn'); });
 
   socket.on('user_list', (data) => {
     userListEl.innerHTML = '';
@@ -440,25 +506,19 @@
       userListEl.appendChild(li);
     });
   });
-
   socket.on('user_joined', (data) => {
     if (data.nick !== MY_NICK) addSystem('→ <strong>' + esc(data.nick) + '</strong> joined');
   });
-
   socket.on('user_left', (data) => {
-    typingUsers.delete(data.nick);
-    renderTyping();
+    typingUsers.delete(data.nick); renderTyping();
     addSystem('← <strong>' + esc(data.nick) + '</strong> left');
   });
-
   socket.on('new_message', (data) => {
-    typingUsers.delete(data.nick);
-    renderTyping();
+    typingUsers.delete(data.nick); renderTyping();
     const isMe = data.nick === MY_NICK;
     addMessage(data.nick, data.text, data.created_at, isMe);
     if (!isMe) playNotification();
   });
-
   socket.on('user_typing', (data) => {
     if (data.nick === MY_NICK) return;
     data.typing ? typingUsers.add(data.nick) : typingUsers.delete(data.nick);
@@ -467,26 +527,25 @@
 
   function renderTyping() {
     const names = [...typingUsers];
-    if (!names.length) {
-      typingBar.classList.add('empty'); typingText.textContent = '';
-    } else {
+    if (!names.length) { typingBar.classList.add('empty'); typingText.textContent = ''; }
+    else {
       typingBar.classList.remove('empty');
-      typingText.textContent = names.length === 1
-        ? names[0] + ' is typing...'
+      typingText.textContent = names.length === 1 ? names[0] + ' is typing...'
         : names.length === 2 ? names[0] + ' and ' + names[1] + ' are typing...'
         : names.length + ' people are typing...';
     }
   }
 
-  // ── Send ─────────────────────────────────────────────────────────────────
-  inputEl.addEventListener('input', () => {
-    if (!isTyping) { isTyping = true; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: true }); }
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => { isTyping = false; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false }); }, 1500);
-  });
-
-  sendBtn.addEventListener('click', sendMessage);
-  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  // ── Send ──────────────────────────────────────────────────────────────────
+  if (IS_MEMBER && inputEl) {
+    inputEl.addEventListener('input', () => {
+      if (!isTyping) { isTyping = true; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: true }); }
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => { isTyping = false; socket.emit('typing', { room: ROOM, nick: MY_NICK, typing: false }); }, 1500);
+    });
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  }
 
   function sendMessage() {
     const text = inputEl.value.trim();
@@ -498,22 +557,19 @@
     inputEl.value = '';
   }
 
-  // ── Render helpers ────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   function addMessage(nick, text, time, isMe) {
     const t = time || new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
     const div = document.createElement('div');
     div.className = 'message';
     div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
     div.innerHTML =
-      '<div class="meta">' +
-        '<span class="nick ' + (isMe?'mine':'') + '">' + esc(nick) + '</span>' +
-        '<span class="time">' + t + '</span>' +
-      '</div>' +
+      '<div class="meta"><span class="nick ' + (isMe?'mine':'') + '">' + esc(nick) + '</span>' +
+      '<span class="time">' + t + '</span></div>' +
       '<div class="bubble ' + (isMe?'mine':'') + '" data-orig="' + esc(text) + '">' + renderText(text) + '</div>';
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
-
   function addSystem(html) {
     const div = document.createElement('div');
     div.className = 'message system';
@@ -521,14 +577,12 @@
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
-
   function renderText(text) {
     return esc(text).replace(/@([\w_]+)/g, (match, name) => {
       const mentionMe = (name === MY_NICK);
       return '<span class="mention' + (mentionMe ? ' me' : '') + '">' + match + '</span>';
     });
   }
-
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 </script>

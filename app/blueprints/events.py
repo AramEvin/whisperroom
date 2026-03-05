@@ -2,7 +2,7 @@ from time import time
 from flask import request
 from flask_socketio import emit, join_room, disconnect
 from .. import socketio, db
-from ..models import Room, Message, UserSession
+from ..models import Room, Message, UserSession, RoomMembership
 
 # ── In-memory state ────────────────────────────────────────────────────────
 # { room_name: { sid: nick } }
