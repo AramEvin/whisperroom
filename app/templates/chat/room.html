@@ -36,15 +36,17 @@
   .icon-btn.search-active { border-color:var(--yellow); color:var(--yellow); }
 
   /* ── Layout ── */
-  main { display:grid; grid-template-columns:1fr 210px; overflow:hidden; min-height:0; }
+  main { display:grid; grid-template-columns:1fr 210px; overflow:hidden; min-height:0; position:relative; }
 
   /* ── Search panel ── */
   #search-panel {
     display:none;
     background:var(--surface); border-bottom:1px solid var(--border);
     padding:10px 18px; gap:8px; align-items:center;
+    position:relative; z-index:20;
   }
   #search-panel.open { display:flex; }
+  #search-panel * { pointer-events:auto; }
   #search-input {
     flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
     font-family:var(--mono); font-size:0.83rem; padding:7px 12px;
@@ -522,8 +524,8 @@
 
   function renderText(text) {
     return esc(text).replace(/@([\w_]+)/g, (match, name) => {
-      const isMe = name === MY_NICK;
-      return '<span class="mention' + (isMe?' me':'') + '">' + match + '</span>';
+      const mentionMe = (name === MY_NICK);
+      return '<span class="mention' + (mentionMe ? ' me' : '') + '">' + match + '</span>';
     });
   }
 
